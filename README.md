@@ -1,6 +1,6 @@
 # rimage
 
-*rimage* provides basic image functions for loading and manipulating basic 2D bitmap data, inspired by [raylib](https://github.com/raysan5/raylib)'s [texture](https://github.com/raysan5/raylib/blob/master/src/rtextures.c) module.
+*rimage* provides basic image functions for loading and manipulating basic 2D bitmap data, forked from [raylib](https://github.com/raysan5/raylib)'s [texture](https://github.com/raysan5/raylib/blob/master/src/rtextures.c) module.
 
 ## Usage
 
