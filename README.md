@@ -1,6 +1,6 @@
 # rimage
 
-*rimage* provides basic image functions for loading and manipulating basic 2D bitmap data, forked from [raylib](https://github.com/raysan5/raylib)'s [texture](https://github.com/raysan5/raylib/blob/master/src/rtextures.c) module.
+*rimage* provides basic image functions for loading and manipulating basic 2D bitmap data, forked from [raylib](https://github.com/raysan5/raylib)'s [textures](https://github.com/raysan5/raylib/blob/master/src/rtextures.c) module.
 
 ## Usage
 
@@ -10,22 +10,25 @@
 #include "rimage.h"
 
 int main() {
-    // Load
-    Image image = LoadImage("resources/carlsagan.png");
+    Image image = LoadImage("cat.png");
 
-    // Draw
     ImageDrawCircle(&image, 20, 20, 10, RED);
     ImageDrawLine(&image, 200, 10, 80, 300, BLUE);
     ImageDrawRectangle(&image, 10, 150, 50, 40, GREEN);
 
-    // Export
     ExportImage(image, "out.png");
+
+    UnloadImage(image);
+
     return 0;
 }
 ```
 
+## Why Fork?
 
-# License
+It would be great to be able to use the Image API within raylib without requiring a hard fork. See the [discussion about it](https://github.com/raysan5/raylib/discussions/2865) to see how you could help out.
+
+## License
 
 rimage is licensed under an unmodified zlib/libpng license, which is an OSI-certified, BSD-like license that allows static linking with closed source software. Check [LICENSE](LICENSE) for further details.
 

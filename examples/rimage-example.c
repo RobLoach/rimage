@@ -13,5 +13,9 @@ int main() {
 
     // Export
     ExportImage(image, "out.png");
+
+    // Unload
+    UnloadImage(image);
+
     return 0;
 }

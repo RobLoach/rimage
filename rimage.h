@@ -3843,7 +3843,7 @@ void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2
             rlEnd();
         rlPopMatrix();
         rlSetTexture(0);
-        
+
     }
 }
 
