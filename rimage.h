@@ -14,8 +14,9 @@
 *   #define SUPPORT_FILEFORMAT_GIF
 *   #define SUPPORT_FILEFORMAT_QOI
 *   #define SUPPORT_FILEFORMAT_PSD
-*   #define SUPPORT_FILEFORMAT_PIC
 *   #define SUPPORT_FILEFORMAT_HDR
+*   #define SUPPORT_FILEFORMAT_PIC
+*   #define SUPPORT_FILEFORMAT_PNM
 *   #define SUPPORT_FILEFORMAT_DDS
 *   #define SUPPORT_FILEFORMAT_PKM
 *   #define SUPPORT_FILEFORMAT_KTX
@@ -42,8 +43,8 @@
 *
 *   LICENSE: zlib/libpng
 *
-*   Copyright (c) 2013-2022 Ramon Santamaria (@raysan5)
-*   Copyright (c) 2022 Rob Loach (@RobLoach)
+*   Copyright (c) 2013-2023 Ramon Santamaria (@raysan5)
+*   Copyright (c) 2022-2023 Rob Loach (@RobLoach)
 *
 *   This software is provided "as-is", without any express or implied warranty. In no event
 *   will the authors be held liable for any damages arising from the use of this software.
@@ -61,8 +62,6 @@
 *     3. This notice may not be removed or altered from any source distribution.
 *
 **********************************************************************************************/
-
-
 
 #ifndef RIMAGE_H_INCLUDED
 #define RIMAGE_H_INCLUDED
@@ -198,11 +197,9 @@ RLAPI Image LoadImage(const char *fileName);                                    
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
-//RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
 RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
-RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
 
 // Image generation functions
 RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color
@@ -213,6 +210,7 @@ RLAPI Image GenImageChecked(int width, int height, int checksX, int checksY, Col
 RLAPI Image GenImageWhiteNoise(int width, int height, float factor);                                     // Generate image: white noise
 RLAPI Image GenImagePerlinNoise(int width, int height, int offsetX, int offsetY, float scale);           // Generate image: perlin noise
 RLAPI Image GenImageCellular(int width, int height, int tileSize);                                       // Generate image: cellular algorithm, bigger tileSize means bigger cells
+RLAPI Image GenImageText(int width, int height, const char *text);                                       // Generate image: grayscale image from text data
 
 // Image manipulation functions
 RLAPI Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
@@ -226,6 +224,7 @@ RLAPI void ImageAlphaCrop(Image *image, float threshold);                       
 RLAPI void ImageAlphaClear(Image *image, Color color, float threshold);                                  // Clear alpha channel to desired color
 RLAPI void ImageAlphaMask(Image *image, Image alphaMask);                                                // Apply alpha mask to image
 RLAPI void ImageAlphaPremultiply(Image *image);                                                          // Premultiply alpha channel
+RLAPI void ImageBlurGaussian(Image *image, int blurSize);                                                // Apply Gaussian blur using a box blur approximation
 RLAPI void ImageResize(Image *image, int newWidth, int newHeight);                                       // Resize image (Bicubic scaling algorithm)
 RLAPI void ImageResizeNN(Image *image, int newWidth,int newHeight);                                      // Resize image (Nearest-Neighbor scaling algorithm)
 RLAPI void ImageResizeCanvas(Image *image, int newWidth, int newHeight, int offsetX, int offsetY, Color fill);  // Resize canvas and fill with color
@@ -257,6 +256,8 @@ RLAPI void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, 
 RLAPI void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color);                          // Draw line within an image (Vector version)
 RLAPI void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color);               // Draw circle within an image
 RLAPI void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color);                        // Draw circle within an image (Vector version)
+RLAPI void ImageDrawCircleLines(Image *dst, int centerX, int centerY, int radius, Color color);          // Draw circle outline within an image
+RLAPI void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color);                   // Draw circle outline within an image (Vector version)
 RLAPI void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color);       // Draw rectangle within an image
 RLAPI void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color color);                 // Draw rectangle within an image (Vector version)
 RLAPI void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color);                                // Draw rectangle within an image
@@ -272,6 +273,9 @@ RLAPI Vector4 ColorNormalize(Color color);                                  // G
 RLAPI Color ColorFromNormalized(Vector4 normalized);                        // Get Color from normalized values [0..1]
 RLAPI Vector3 ColorToHSV(Color color);                                      // Get HSV values for a Color, hue [0..360], saturation/value [0..1]
 RLAPI Color ColorFromHSV(float hue, float saturation, float value);         // Get a Color from HSV values, hue [0..360], saturation/value [0..1]
+RLAPI Color ColorTint(Color color, Color tint);                             // Get color multiplied with another color
+RLAPI Color ColorBrightness(Color color, float factor);                     // Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
+RLAPI Color ColorContrast(Color color, float contrast);                     // Get color with contrast correction, contrast values between -1.0f and 1.0f
 RLAPI Color ColorAlpha(Color color, float alpha);                           // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 RLAPI Color ColorAlphaBlend(Color dst, Color src, Color tint);              // Get src alpha-blended into dst color with tint
 RLAPI Color GetColor(unsigned int hexValue);                                // Get Color structure from hexadecimal value
@@ -359,6 +363,11 @@ typedef enum {
 #define RIMAGE_STRLEN strlen
 #endif
 
+#ifndef RIMAGE_STRCPY
+#include <string.h>
+#define RIMAGE_STRCPY strcpy
+#endif
+
 #ifndef RIMAGE_STRCMP
 #include <string.h>
 #define RIMAGE_STRCMP strcmp
@@ -407,14 +416,14 @@ bool IsFileExtension(const char *fileName, const char *ext)
 
         for (int i = 0; i < extCount; i++)
         {
-            if (strcmp(fileExtLower, TextToLower(checkExts[i])) == 0)
+            if (RIMAGE_STRCMP(fileExtLower, TextToLower(checkExts[i])) == 0)
             {
                 result = true;
                 break;
             }
         }
 #else
-        if (strcmp(fileExt, ext) == 0) result = true;
+        if (RIMAGE_STRCMP(fileExt, ext) == 0) result = true;
 #endif
     }
 
@@ -537,6 +546,9 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
 #if !defined(SUPPORT_FILEFORMAT_HDR)
     #define STBI_NO_HDR
 #endif
+#if !defined(SUPPORT_FILEFORMAT_PNM)
+    #define STBI_NO_PNM
+#endif
 
 #if defined(SUPPORT_FILEFORMAT_DDS)
     #define RL_GPUTEX_SUPPORT_DDS
@@ -555,8 +567,6 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
 #endif
 
 // Image fileformats not supported by default
-#define STBI_NO_PIC
-#define STBI_NO_PNM             // Image format .ppm and .pgm
 
 #if defined(__TINYC__)
     #define STBI_NO_SIMD
@@ -568,8 +578,9 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
      defined(SUPPORT_FILEFORMAT_JPG) || \
      defined(SUPPORT_FILEFORMAT_PSD) || \
      defined(SUPPORT_FILEFORMAT_GIF) || \
+     defined(SUPPORT_FILEFORMAT_HDR) || \
      defined(SUPPORT_FILEFORMAT_PIC) || \
-     defined(SUPPORT_FILEFORMAT_HDR))
+     defined(SUPPORT_FILEFORMAT_PNM))
 
     #define STBI_MALLOC RL_MALLOC
     #define STBI_FREE RL_FREE
@@ -595,8 +606,17 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
     #define QOI_MALLOC RL_MALLOC
     #define QOI_FREE RL_FREE
 
+#if defined(_MSC_VER ) // qoi has warnings on windows, so disable them just for this file
+#pragma warning( push )
+#pragma warning( disable : 4267)
+#endif
     #define QOI_IMPLEMENTATION
     #include "external/qoi.h"
+
+#if defined(_MSC_VER )
+#pragma warning( pop )
+#endif
+
 #endif
 
 #if defined(SUPPORT_IMAGE_EXPORT)
@@ -626,6 +646,10 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
 //----------------------------------------------------------------------------------
 #ifndef PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD
     #define PIXELFORMAT_UNCOMPRESSED_R5G5B5A1_ALPHA_THRESHOLD  50    // Threshold over 255 to set alpha as 0
+#endif
+
+#ifndef GAUSSIAN_BLUR_ITERATIONS
+    #define GAUSSIAN_BLUR_ITERATIONS  4    // Number of box blur iterations to approximate gaussian blur
 #endif
 
 //----------------------------------------------------------------------------------
@@ -664,6 +688,7 @@ Image LoadImage(const char *fileName)
     defined(SUPPORT_FILEFORMAT_GIF) || \
     defined(SUPPORT_FILEFORMAT_PIC) || \
     defined(SUPPORT_FILEFORMAT_HDR) || \
+    defined(SUPPORT_FILEFORMAT_PNM) || \
     defined(SUPPORT_FILEFORMAT_PSD)
 
     #define STBI_REQUIRED
@@ -774,6 +799,9 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_PIC)
         || (RIMAGE_STRCMP(fileType, ".pic") == 0)
 #endif
+#if defined(SUPPORT_FILEFORMAT_PNM)
+        || ((RIMAGE_STRCMP(fileType, ".ppm") == 0) || (RIMAGE_STRCMP(fileType, ".pgm") == 0))
+#endif
 #if defined(SUPPORT_FILEFORMAT_PSD)
         || (RIMAGE_STRCMP(fileType, ".psd") == 0)
 #endif
@@ -836,7 +864,6 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #if defined(SUPPORT_FILEFORMAT_DDS)
     else if (RIMAGE_STRCMP(fileType, ".dds") == 0)
     {
-        int format = 0;
         image.data = rl_load_dds_from_memory(fileData, dataSize, &image.width, &image.height, &image.format, &image.mipmaps);
     }
 #endif
@@ -866,59 +893,11 @@ Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, i
 #endif
     else TRACELOG(LOG_WARNING, "IMAGE: Data format not supported");
 
-    if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %i | %i mipmaps)", image.width, image.height, (image.format), image.mipmaps);
+    if (image.data != NULL) TRACELOG(LOG_INFO, "IMAGE: Data loaded successfully (%ix%i | %s | %i mipmaps)", image.width, image.height, "unknown format" /*rlGetPixelFormatName(image.format)*/, image.mipmaps);
     else TRACELOG(LOG_WARNING, "IMAGE: Failed to load image data");
 
     return image;
 }
-
-/*
-// Load image from GPU texture data
-// NOTE: Compressed texture formats not supported
-Image LoadImageFromTexture(Texture2D texture)
-{
-    Image image = { 0 };
-
-    if (texture.format < PIXELFORMAT_COMPRESSED_DXT1_RGB)
-    {
-        image.data = rlReadTexturePixels(texture.id, texture.width, texture.height, texture.format);
-
-        if (image.data != NULL)
-        {
-            image.width = texture.width;
-            image.height = texture.height;
-            image.format = texture.format;
-            image.mipmaps = 1;
-
-#if defined(GRAPHICS_API_OPENGL_ES2)
-            // NOTE: Data retrieved on OpenGL ES 2.0 should be RGBA,
-            // coming from FBO color buffer attachment, but it seems
-            // original texture format is retrieved on RPI...
-            image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-#endif
-            TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Pixel data retrieved successfully", texture.id);
-        }
-        else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve pixel data", texture.id);
-    }
-    else TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] Failed to retrieve compressed pixel data", texture.id);
-
-    return image;
-}
-
-// Load image from screen buffer and (screenshot)
-Image LoadImageFromScreen(void)
-{
-    Image image = { 0 };
-
-    image.width = GetScreenWidth();
-    image.height = GetScreenHeight();
-    image.mipmaps = 1;
-    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-    image.data = rlReadScreenPixels(image.width, image.height);
-
-    return image;
-}
-*/
 
 // Unload image from CPU memory (RAM)
 void UnloadImage(Image image)
@@ -1030,31 +1009,31 @@ bool ExportImageAsCode(Image image, const char *fileName)
     char *txtData = (char *)RL_CALLOC(dataSize*6 + 2000, sizeof(char));
 
     int byteCount = 0;
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "// Copyright (c) 2018-2022 Ramon Santamaria (@raysan5)                                //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "//                                                                                    //\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// ImageAsCode exporter v1.0 - Image pixel data exported as an array of bytes         //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// more info and bugs-report:  github.com/raysan5/raylib                              //\n");
+    byteCount += sprintf(txtData + byteCount, "// feedback and support:       ray[at]raylib.com                                      //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "// Copyright (c) 2018-2023 Ramon Santamaria (@raysan5)                                //\n");
+    byteCount += sprintf(txtData + byteCount, "//                                                                                    //\n");
+    byteCount += sprintf(txtData + byteCount, "////////////////////////////////////////////////////////////////////////////////////////\n\n");
 
     // Get file name from path and convert variable name to uppercase
     char varFileName[256] = { 0 };
-    strcpy(varFileName, GetFileNameWithoutExt(fileName));
+    RIMAGE_STRCPY(varFileName, GetFileNameWithoutExt(fileName));
     for (int i = 0; varFileName[i] != '\0'; i++) if ((varFileName[i] >= 'a') && (varFileName[i] <= 'z')) { varFileName[i] = varFileName[i] - 32; }
 
     // Add image information
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "// Image data information\n");
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "#define %s_WIDTH    %i\n", varFileName, image.width);
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "#define %s_HEIGHT   %i\n", varFileName, image.height);
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
+    byteCount += sprintf(txtData + byteCount, "// Image data information\n");
+    byteCount += sprintf(txtData + byteCount, "#define %s_WIDTH    %i\n", varFileName, image.width);
+    byteCount += sprintf(txtData + byteCount, "#define %s_HEIGHT   %i\n", varFileName, image.height);
+    byteCount += sprintf(txtData + byteCount, "#define %s_FORMAT   %i          // raylib internal pixel format\n\n", varFileName, image.format);
 
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
-    for (int i = 0; i < dataSize - 1; i++) byteCount += RIMAGE_SPRINTF(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
-    byteCount += RIMAGE_SPRINTF(txtData + byteCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
+    byteCount += sprintf(txtData + byteCount, "static unsigned char %s_DATA[%i] = { ", varFileName, dataSize);
+    for (int i = 0; i < dataSize - 1; i++) byteCount += sprintf(txtData + byteCount, ((i%TEXT_BYTES_PER_LINE == 0)? "0x%x,\n" : "0x%x, "), ((unsigned char *)image.data)[i]);
+    byteCount += sprintf(txtData + byteCount, "0x%x };\n", ((unsigned char *)image.data)[dataSize - 1]);
 
     // NOTE: Text data size exported is determined by '\0' (NULL) character
     success = SaveFileText(fileName, txtData);
@@ -1067,7 +1046,8 @@ bool ExportImageAsCode(Image image, const char *fileName)
     else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to export image as code", fileName);
 
     return success;
-}*/
+}
+*/
 
 //------------------------------------------------------------------------------------
 // Image generation functions
@@ -1328,6 +1308,25 @@ Image GenImageCellular(int width, int height, int tileSize)
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,
         .mipmaps = 1
     };
+
+    return image;
+}
+
+// Generate image: grayscale image from text data
+Image GenImageText(int width, int height, const char *text)
+{
+    Image image = { 0 };
+
+    int textLength = TextLength(text);
+    int imageViewSize = width*height;
+
+    image.width = width;
+    image.height = height;
+    image.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE;
+    image.data = RL_CALLOC(imageViewSize, 1);
+    image.mipmaps = 1;
+
+    memcpy(image.data, text, (textLength > imageViewSize)? imageViewSize : textLength);
 
     return image;
 }
@@ -1668,6 +1667,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 
     // NOTE: Text image is generated at font base size, later scaled to desired font size
     Vector2 imSize = MeasureTextEx(font, text, (float)font.baseSize, spacing);  // WARNING: Module required: rtext
+    Vector2 textSize = MeasureTextEx(font, text, fontSize, spacing);
 
     // Create image to store text
     imText = GenImageColor((int)imSize.x, (int)imSize.y, BLANK);
@@ -1676,8 +1676,8 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     {
         // Get next codepoint from byte string and glyph index in font
         int codepointByteCount = 0;
-        int codepoint = GetCodepoint(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
-        int index = GetGlyphIndex(font, codepoint);                     // WARNING: Module required: rtext
+        int codepoint = GetCodepointNext(&text[i], &codepointByteCount);    // WARNING: Module required: rtext
+        int index = GetGlyphIndex(font, codepoint);                         // WARNING: Module required: rtext
 
         // NOTE: Normally we exit the decoding sequence as soon as a bad byte is found (and return 0x3f)
         // but we need to draw all of the bad bytes using the '?' symbol moving one byte
@@ -1706,12 +1706,13 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
     }
 
     // Scale image depending on text size
-    if (fontSize > imSize.y)
+    if (textSize.y != imSize.y)
     {
-        float scaleFactor = fontSize/imSize.y;
+        float scaleFactor = textSize.y / imSize.y;
         TRACELOG(LOG_INFO, "IMAGE: Text scaled by factor: %f", scaleFactor);
 
         // Using nearest-neighbor scaling algorithm for default font
+        // TODO: Allow defining the preferred scaling mechanism externally
         // WARNING: Module required: rtext
         if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
@@ -1908,6 +1909,158 @@ void ImageAlphaPremultiply(Image *image)
     RL_FREE(image->data);
 
     int format = image->format;
+    image->data = pixels;
+    image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
+
+    ImageFormat(image, format);
+}
+
+// Apply box blur
+void ImageBlurGaussian(Image *image, int blurSize) {
+    // Security check to avoid program crash
+    if ((image->data == NULL) || (image->width == 0) || (image->height == 0)) return;
+
+    ImageAlphaPremultiply(image);
+
+    Color *pixels = LoadImageColors(*image);
+
+    // Loop switches between pixelsCopy1 and pixelsCopy2
+    Vector4 *pixelsCopy1 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+    Vector4 *pixelsCopy2 = RL_MALLOC((image->height)*(image->width)*sizeof(Vector4));
+
+    for (int i = 0; i < (image->height)*(image->width); i++) {
+        pixelsCopy1[i].x = pixels[i].r;
+        pixelsCopy1[i].y = pixels[i].g;
+        pixelsCopy1[i].z = pixels[i].b;
+        pixelsCopy1[i].w = pixels[i].a;
+    }
+
+    // Repeated convolution of rectangular window signal by itself converges to a gaussian distribution
+    for (int j = 0; j < GAUSSIAN_BLUR_ITERATIONS; j++) {
+        // Horizontal motion blur
+        for (int row = 0; row < image->height; row++)
+        {
+            float avgR = 0.0f;
+            float avgG = 0.0f;
+            float avgB = 0.0f;
+            float avgAlpha = 0.0f;
+            int convolutionSize = blurSize+1;
+
+            for (int i = 0; i < blurSize+1; i++)
+            {
+                avgR += pixelsCopy1[row*image->width + i].x;
+                avgG += pixelsCopy1[row*image->width + i].y;
+                avgB += pixelsCopy1[row*image->width + i].z;
+                avgAlpha += pixelsCopy1[row*image->width + i].w;
+            }
+
+            pixelsCopy2[row*image->width].x = avgR/convolutionSize;
+            pixelsCopy2[row*image->width].y = avgG/convolutionSize;
+            pixelsCopy2[row*image->width].z = avgB/convolutionSize;
+            pixelsCopy2[row*image->width].w = avgAlpha/convolutionSize;
+
+            for (int x = 1; x < image->width; x++)
+            {
+                if (x-blurSize >= 0)
+                {
+                    avgR -= pixelsCopy1[row*image->width + x-blurSize].x;
+                    avgG -= pixelsCopy1[row*image->width + x-blurSize].y;
+                    avgB -= pixelsCopy1[row*image->width + x-blurSize].z;
+                    avgAlpha -= pixelsCopy1[row*image->width + x-blurSize].w;
+                    convolutionSize--;
+                }
+
+                if (x+blurSize < image->width)
+                {
+                    avgR += pixelsCopy1[row*image->width + x+blurSize].x;
+                    avgG += pixelsCopy1[row*image->width + x+blurSize].y;
+                    avgB += pixelsCopy1[row*image->width + x+blurSize].z;
+                    avgAlpha += pixelsCopy1[row*image->width + x+blurSize].w;
+                    convolutionSize++;
+                }
+
+                pixelsCopy2[row*image->width + x].x = avgR/convolutionSize;
+                pixelsCopy2[row*image->width + x].y = avgG/convolutionSize;
+                pixelsCopy2[row*image->width + x].z = avgB/convolutionSize;
+                pixelsCopy2[row*image->width + x].w = avgAlpha/convolutionSize;
+            }
+                }
+
+        // Vertical motion blur
+        for (int col = 0; col < image->width; col++)
+        {
+            float avgR = 0.0f;
+            float avgG = 0.0f;
+            float avgB = 0.0f;
+            float avgAlpha = 0.0f;
+            int convolutionSize = blurSize+1;
+
+            for (int i = 0; i < blurSize+1; i++)
+            {
+                avgR += pixelsCopy2[i*image->width + col].x;
+                avgG += pixelsCopy2[i*image->width + col].y;
+                avgB += pixelsCopy2[i*image->width + col].z;
+                avgAlpha += pixelsCopy2[i*image->width + col].w;
+            }
+
+            pixelsCopy1[col].x = (unsigned char) (avgR/convolutionSize);
+            pixelsCopy1[col].y = (unsigned char) (avgG/convolutionSize);
+            pixelsCopy1[col].z = (unsigned char) (avgB/convolutionSize);
+            pixelsCopy1[col].w = (unsigned char) (avgAlpha/convolutionSize);
+
+            for (int y = 1; y < image->height; y++)
+            {
+                if (y-blurSize >= 0)
+                {
+                    avgR -= pixelsCopy2[(y-blurSize)*image->width + col].x;
+                    avgG -= pixelsCopy2[(y-blurSize)*image->width + col].y;
+                    avgB -= pixelsCopy2[(y-blurSize)*image->width + col].z;
+                    avgAlpha -= pixelsCopy2[(y-blurSize)*image->width + col].w;
+                    convolutionSize--;
+                }
+                if (y+blurSize < image->height)
+                {
+                    avgR += pixelsCopy2[(y+blurSize)*image->width + col].x;
+                    avgG += pixelsCopy2[(y+blurSize)*image->width + col].y;
+                    avgB += pixelsCopy2[(y+blurSize)*image->width + col].z;
+                    avgAlpha += pixelsCopy2[(y+blurSize)*image->width + col].w;
+                    convolutionSize++;
+                }
+
+                pixelsCopy1[y*image->width + col].x = (unsigned char) (avgR/convolutionSize);
+                pixelsCopy1[y*image->width + col].y = (unsigned char) (avgG/convolutionSize);
+                pixelsCopy1[y*image->width + col].z = (unsigned char) (avgB/convolutionSize);
+                pixelsCopy1[y*image->width + col].w = (unsigned char) (avgAlpha/convolutionSize);
+            }
+        }
+    }
+
+
+    // Reverse premultiply
+    for (int i = 0; i < (image->width)*(image->height); i++)
+    {
+        if (pixelsCopy1[i].w == 0.0f)
+        {
+            pixels[i].r = 0;
+            pixels[i].g = 0;
+            pixels[i].b = 0;
+            pixels[i].a = 0;
+        }
+        else if (pixelsCopy1[i].w <= 255.0f)
+        {
+            float alpha = (float)pixelsCopy1[i].w/255.0f;
+            pixels[i].r = (unsigned char)((float)pixelsCopy1[i].x/alpha);
+            pixels[i].g = (unsigned char)((float)pixelsCopy1[i].y/alpha);
+            pixels[i].b = (unsigned char)((float)pixelsCopy1[i].z/alpha);
+            pixels[i].a = (unsigned char) pixelsCopy1[i].w;
+        }
+    }
+
+    int format = image->format;
+    RL_FREE(image->data);
+    RL_FREE(pixelsCopy1);
+    RL_FREE(pixelsCopy2);
+
     image->data = pixels;
     image->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
 
@@ -3380,807 +3533,13 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
 }
 */
 
-/*
-//------------------------------------------------------------------------------------
-// Texture loading functions
-//------------------------------------------------------------------------------------
-// Load texture from file into GPU memory (VRAM)
-Texture2D LoadTexture(const char *fileName)
-{
-    Texture2D texture = { 0 };
-
-    Image image = LoadImage(fileName);
-
-    if (image.data != NULL)
-    {
-        texture = LoadTextureFromImage(image);
-        UnloadImage(image);
-    }
-
-    return texture;
-}
-
-// Load a texture from image data
-// NOTE: image is not unloaded, it must be done manually
-Texture2D LoadTextureFromImage(Image image)
-{
-    Texture2D texture = { 0 };
-
-    if ((image.width != 0) && (image.height != 0))
-    {
-        texture.id = rlLoadTexture(image.data, image.width, image.height, image.format, image.mipmaps);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Data is not valid to load texture");
-
-    texture.width = image.width;
-    texture.height = image.height;
-    texture.mipmaps = image.mipmaps;
-    texture.format = image.format;
-
-    return texture;
-}
-
-// Load cubemap from image, multiple image cubemap layouts supported
-TextureCubemap LoadTextureCubemap(Image image, int layout)
-{
-    TextureCubemap cubemap = { 0 };
-
-    if (layout == CUBEMAP_LAYOUT_AUTO_DETECT)      // Try to automatically guess layout type
-    {
-        // Check image width/height to determine the type of cubemap provided
-        if (image.width > image.height)
-        {
-            if ((image.width/6) == image.height) { layout = CUBEMAP_LAYOUT_LINE_HORIZONTAL; cubemap.width = image.width/6; }
-            else if ((image.width/4) == (image.height/3)) { layout = CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE; cubemap.width = image.width/4; }
-            else if (image.width >= (int)((float)image.height*1.85f)) { layout = CUBEMAP_LAYOUT_PANORAMA; cubemap.width = image.width/4; }
-        }
-        else if (image.height > image.width)
-        {
-            if ((image.height/6) == image.width) { layout = CUBEMAP_LAYOUT_LINE_VERTICAL; cubemap.width = image.height/6; }
-            else if ((image.width/3) == (image.height/4)) { layout = CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR; cubemap.width = image.width/3; }
-        }
-
-        cubemap.height = cubemap.width;
-    }
-
-    // Layout provided or already auto-detected
-    if (layout != CUBEMAP_LAYOUT_AUTO_DETECT)
-    {
-        int size = cubemap.width;
-
-        Image faces = { 0 };                // Vertical column image
-        Rectangle faceRecs[6] = { 0 };      // Face source rectangles
-        for (int i = 0; i < 6; i++) faceRecs[i] = (Rectangle){ 0, 0, (float)size, (float)size };
-
-        if (layout == CUBEMAP_LAYOUT_LINE_VERTICAL)
-        {
-            faces = ImageCopy(image);       // Image data already follows expected convention
-        }
-        else if (layout == CUBEMAP_LAYOUT_PANORAMA)
-        {
-            // TODO: Convert panorama image to square faces...
-            // Ref: https://github.com/denivip/panorama/blob/master/panorama.cpp
-        }
-        else
-        {
-            if (layout == CUBEMAP_LAYOUT_LINE_HORIZONTAL) for (int i = 0; i < 6; i++) faceRecs[i].x = (float)size*i;
-            else if (layout == CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR)
-            {
-                faceRecs[0].x = (float)size; faceRecs[0].y = (float)size;
-                faceRecs[1].x = (float)size; faceRecs[1].y = (float)size*3;
-                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
-                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
-                faceRecs[4].x = 0; faceRecs[4].y = (float)size;
-                faceRecs[5].x = (float)size*2; faceRecs[5].y = (float)size;
-            }
-            else if (layout == CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE)
-            {
-                faceRecs[0].x = (float)size*2; faceRecs[0].y = (float)size;
-                faceRecs[1].x = 0; faceRecs[1].y = (float)size;
-                faceRecs[2].x = (float)size; faceRecs[2].y = 0;
-                faceRecs[3].x = (float)size; faceRecs[3].y = (float)size*2;
-                faceRecs[4].x = (float)size; faceRecs[4].y = (float)size;
-                faceRecs[5].x = (float)size*3; faceRecs[5].y = (float)size;
-            }
-
-            // Convert image data to 6 faces in a vertical column, that's the optimum layout for loading
-            faces = GenImageColor(size, size*6, MAGENTA);
-            ImageFormat(&faces, image.format);
-
-            // NOTE: Image formating does not work with compressed textures
-
-            for (int i = 0; i < 6; i++) ImageDraw(&faces, image, faceRecs[i], (Rectangle){ 0, (float)size*i, (float)size, (float)size }, WHITE);
-        }
-
-        // NOTE: Cubemap data is expected to be provided as 6 images in a single data array,
-        // one after the other (that's a vertical image), following convention: +X, -X, +Y, -Y, +Z, -Z
-        cubemap.id = rlLoadTextureCubemap(faces.data, size, faces.format);
-        if (cubemap.id == 0) TRACELOG(LOG_WARNING, "IMAGE: Failed to load cubemap image");
-
-        UnloadImage(faces);
-    }
-    else TRACELOG(LOG_WARNING, "IMAGE: Failed to detect cubemap image layout");
-
-    return cubemap;
-}
-
-// Load texture for rendering (framebuffer)
-// NOTE: Render texture is loaded by default with RGBA color attachment and depth RenderBuffer
-RenderTexture2D LoadRenderTexture(int width, int height)
-{
-    RenderTexture2D target = { 0 };
-
-    target.id = rlLoadFramebuffer(width, height);   // Load an empty framebuffer
-
-    if (target.id > 0)
-    {
-        rlEnableFramebuffer(target.id);
-
-        // Create color texture (default to RGBA)
-        target.texture.id = rlLoadTexture(NULL, width, height, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8, 1);
-        target.texture.width = width;
-        target.texture.height = height;
-        target.texture.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
-        target.texture.mipmaps = 1;
-
-        // Create depth renderbuffer/texture
-        target.depth.id = rlLoadTextureDepth(width, height, true);
-        target.depth.width = width;
-        target.depth.height = height;
-        target.depth.format = 19;       //DEPTH_COMPONENT_24BIT?
-        target.depth.mipmaps = 1;
-
-        // Attach color texture and depth renderbuffer/texture to FBO
-        rlFramebufferAttach(target.id, target.texture.id, RL_ATTACHMENT_COLOR_CHANNEL0, RL_ATTACHMENT_TEXTURE2D, 0);
-        rlFramebufferAttach(target.id, target.depth.id, RL_ATTACHMENT_DEPTH, RL_ATTACHMENT_RENDERBUFFER, 0);
-
-        // Check if fbo is complete with attachments (valid)
-        if (rlFramebufferComplete(target.id)) TRACELOG(LOG_INFO, "FBO: [ID %i] Framebuffer object created successfully", target.id);
-
-        rlDisableFramebuffer();
-    }
-    else TRACELOG(LOG_WARNING, "FBO: Framebuffer object can not be created");
-
-    return target;
-}
-
-// Unload texture from GPU memory (VRAM)
-void UnloadTexture(Texture2D texture)
-{
-    if (texture.id > 0)
-    {
-        rlUnloadTexture(texture.id);
-
-        TRACELOG(LOG_INFO, "TEXTURE: [ID %i] Unloaded texture data from VRAM (GPU)", texture.id);
-    }
-}
-
-// Unload render texture from GPU memory (VRAM)
-void UnloadRenderTexture(RenderTexture2D target)
-{
-    if (target.id > 0)
-    {
-        // Color texture attached to FBO is deleted
-        rlUnloadTexture(target.texture.id);
-
-        // NOTE: Depth texture/renderbuffer is automatically
-        // queried and deleted before deleting framebuffer
-        rlUnloadFramebuffer(target.id);
-    }
-}
-
-// Update GPU texture with new data
-// NOTE: pixels data must match texture.format
-void UpdateTexture(Texture2D texture, const void *pixels)
-{
-    rlUpdateTexture(texture.id, 0, 0, texture.width, texture.height, texture.format, pixels);
-}
-
-// Update GPU texture rectangle with new data
-// NOTE: pixels data must match texture.format
-void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels)
-{
-    rlUpdateTexture(texture.id, (int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, texture.format, pixels);
-}
-
-//------------------------------------------------------------------------------------
-// Texture configuration functions
-//------------------------------------------------------------------------------------
-// Generate GPU mipmaps for a texture
-void GenTextureMipmaps(Texture2D *texture)
-{
-    // NOTE: NPOT textures support check inside function
-    // On WebGL (OpenGL ES 2.0) NPOT textures support is limited
-    rlGenTextureMipmaps(texture->id, texture->width, texture->height, texture->format, &texture->mipmaps);
-}
-
-// Set texture scaling filter mode
-void SetTextureFilter(Texture2D texture, int filter)
-{
-    switch (filter)
-    {
-        case TEXTURE_FILTER_POINT:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_TEXTURE_FILTER_MIP_NEAREST - tex filter: POINT, mipmaps filter: POINT (sharp switching between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_NEAREST);
-
-                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
-            }
-            else
-            {
-                // RL_TEXTURE_FILTER_NEAREST - tex filter: POINT (no filter), no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_NEAREST);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_NEAREST);
-            }
-        } break;
-        case TEXTURE_FILTER_BILINEAR:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST - tex filter: BILINEAR, mipmaps filter: POINT (sharp switching between mipmaps)
-                // Alternative: RL_TEXTURE_FILTER_NEAREST_MIP_LINEAR - tex filter: POINT, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR_MIP_NEAREST);
-
-                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-            }
-            else
-            {
-                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-            }
-        } break;
-        case TEXTURE_FILTER_TRILINEAR:
-        {
-            if (texture.mipmaps > 1)
-            {
-                // RL_TEXTURE_FILTER_MIP_LINEAR - tex filter: BILINEAR, mipmaps filter: BILINEAR (smooth transition between mipmaps)
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_MIP_LINEAR);
-
-                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-            }
-            else
-            {
-                TRACELOG(LOG_WARNING, "TEXTURE: [ID %i] No mipmaps available for TRILINEAR texture filtering", texture.id);
-
-                // RL_TEXTURE_FILTER_LINEAR - tex filter: BILINEAR, no mipmaps
-                rlTextureParameters(texture.id, RL_TEXTURE_MIN_FILTER, RL_TEXTURE_FILTER_LINEAR);
-                rlTextureParameters(texture.id, RL_TEXTURE_MAG_FILTER, RL_TEXTURE_FILTER_LINEAR);
-            }
-        } break;
-        case TEXTURE_FILTER_ANISOTROPIC_4X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 4); break;
-        case TEXTURE_FILTER_ANISOTROPIC_8X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 8); break;
-        case TEXTURE_FILTER_ANISOTROPIC_16X: rlTextureParameters(texture.id, RL_TEXTURE_FILTER_ANISOTROPIC, 16); break;
-        default: break;
-    }
-}
-
-// Set texture wrapping mode
-void SetTextureWrap(Texture2D texture, int wrap)
-{
-    switch (wrap)
-    {
-        case TEXTURE_WRAP_REPEAT:
-        {
-            // NOTE: It only works if NPOT textures are supported, i.e. OpenGL ES 2.0 could not support it
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_REPEAT);
-        } break;
-        case TEXTURE_WRAP_CLAMP:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_CLAMP);
-        } break;
-        case TEXTURE_WRAP_MIRROR_REPEAT:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_REPEAT);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_REPEAT);
-        } break;
-        case TEXTURE_WRAP_MIRROR_CLAMP:
-        {
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_S, RL_TEXTURE_WRAP_MIRROR_CLAMP);
-            rlTextureParameters(texture.id, RL_TEXTURE_WRAP_T, RL_TEXTURE_WRAP_MIRROR_CLAMP);
-        } break;
-        default: break;
-    }
-}
-
-//------------------------------------------------------------------------------------
-// Texture drawing functions
-//------------------------------------------------------------------------------------
-// Draw a texture
-void DrawTexture(Texture2D texture, int posX, int posY, Color tint)
-{
-    DrawTextureEx(texture, (Vector2){ (float)posX, (float)posY }, 0.0f, 1.0f, tint);
-}
-
-// Draw a texture with position defined as Vector2
-void DrawTextureV(Texture2D texture, Vector2 position, Color tint)
-{
-    DrawTextureEx(texture, position, 0, 1.0f, tint);
-}
-
-// Draw a texture with extended parameters
-void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint)
-{
-    Rectangle source = { 0.0f, 0.0f, (float)texture.width, (float)texture.height };
-    Rectangle dest = { position.x, position.y, (float)texture.width*scale, (float)texture.height*scale };
-    Vector2 origin = { 0.0f, 0.0f };
-
-    DrawTexturePro(texture, source, dest, origin, rotation, tint);
-}
-
-// Draw a part of a texture (defined by a rectangle)
-void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint)
-{
-    Rectangle dest = { position.x, position.y, fabsf(source.width), fabsf(source.height) };
-    Vector2 origin = { 0.0f, 0.0f };
-
-    DrawTexturePro(texture, source, dest, origin, 0.0f, tint);
-}
-
-// Draw a part of a texture (defined by a rectangle) with 'pro' parameters
-// NOTE: origin is relative to destination rectangle size
-void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint)
-{
-    // Check if texture is valid
-    if (texture.id > 0)
-    {
-        float width = (float)texture.width;
-        float height = (float)texture.height;
-
-        bool flipX = false;
-
-        if (source.width < 0) { flipX = true; source.width *= -1; }
-        if (source.height < 0) source.y -= source.height;
-
-        Vector2 topLeft = { 0 };
-        Vector2 topRight = { 0 };
-        Vector2 bottomLeft = { 0 };
-        Vector2 bottomRight = { 0 };
-
-        // Only calculate rotation if needed
-        if (rotation == 0.0f)
-        {
-            float x = dest.x - origin.x;
-            float y = dest.y - origin.y;
-            topLeft = (Vector2){ x, y };
-            topRight = (Vector2){ x + dest.width, y };
-            bottomLeft = (Vector2){ x, y + dest.height };
-            bottomRight = (Vector2){ x + dest.width, y + dest.height };
-        }
-        else
-        {
-            float sinRotation = sinf(rotation*DEG2RAD);
-            float cosRotation = cosf(rotation*DEG2RAD);
-            float x = dest.x;
-            float y = dest.y;
-            float dx = -origin.x;
-            float dy = -origin.y;
-
-            topLeft.x = x + dx*cosRotation - dy*sinRotation;
-            topLeft.y = y + dx*sinRotation + dy*cosRotation;
-
-            topRight.x = x + (dx + dest.width)*cosRotation - dy*sinRotation;
-            topRight.y = y + (dx + dest.width)*sinRotation + dy*cosRotation;
-
-            bottomLeft.x = x + dx*cosRotation - (dy + dest.height)*sinRotation;
-            bottomLeft.y = y + dx*sinRotation + (dy + dest.height)*cosRotation;
-
-            bottomRight.x = x + (dx + dest.width)*cosRotation - (dy + dest.height)*sinRotation;
-            bottomRight.y = y + (dx + dest.width)*sinRotation + (dy + dest.height)*cosRotation;
-        }
-
-        rlSetTexture(texture.id);
-        rlBegin(RL_QUADS);
-
-            rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-            rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-
-            // Top-left corner for texture and quad
-            if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
-            else rlTexCoord2f(source.x/width, source.y/height);
-            rlVertex2f(topLeft.x, topLeft.y);
-
-            // Bottom-left corner for texture and quad
-            if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-            else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-            rlVertex2f(bottomLeft.x, bottomLeft.y);
-
-            // Bottom-right corner for texture and quad
-            if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-            else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-            rlVertex2f(bottomRight.x, bottomRight.y);
-
-            // Top-right corner for texture and quad
-            if (flipX) rlTexCoord2f(source.x/width, source.y/height);
-            else rlTexCoord2f((source.x + source.width)/width, source.y/height);
-            rlVertex2f(topRight.x, topRight.y);
-
-        rlEnd();
-        rlSetTexture(0);
-
-        // NOTE: Vertex position can be transformed using matrices
-        // but the process is way more costly than just calculating
-        // the vertex positions manually, like done above.
-        // I leave here the old implementation for educational pourposes,
-        // just in case someone wants to do some performance test
-        /*
-        rlSetTexture(texture.id);
-        rlPushMatrix();
-            rlTranslatef(dest.x, dest.y, 0.0f);
-            if (rotation != 0.0f) rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-            rlTranslatef(-origin.x, -origin.y, 0.0f);
-
-            rlBegin(RL_QUADS);
-                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-                rlNormal3f(0.0f, 0.0f, 1.0f);                          // Normal vector pointing towards viewer
-
-                // Bottom-left corner for texture and quad
-                if (flipX) rlTexCoord2f((source.x + source.width)/width, source.y/height);
-                else rlTexCoord2f(source.x/width, source.y/height);
-                rlVertex2f(0.0f, 0.0f);
-
-                // Bottom-right corner for texture and quad
-                if (flipX) rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-                else rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-                rlVertex2f(0.0f, dest.height);
-
-                // Top-right corner for texture and quad
-                if (flipX) rlTexCoord2f(source.x/width, (source.y + source.height)/height);
-                else rlTexCoord2f((source.x + source.width)/width, (source.y + source.height)/height);
-                rlVertex2f(dest.width, dest.height);
-
-                // Top-left corner for texture and quad
-                if (flipX) rlTexCoord2f(source.x/width, source.y/height);
-                else rlTexCoord2f((source.x + source.width)/width, source.y/height);
-                rlVertex2f(dest.width, 0.0f);
-            rlEnd();
-        rlPopMatrix();
-        rlSetTexture(0);
-
-    }
-}
-
-// Draw texture quad with tiling and offset parameters
-// NOTE: Tiling and offset should be provided considering normalized texture values [0..1]
-// i.e tiling = { 1.0f, 1.0f } refers to all texture, offset = { 0.5f, 0.5f } moves texture origin to center
-void DrawTextureQuad(Texture2D texture, Vector2 tiling, Vector2 offset, Rectangle quad, Color tint)
-{
-    // WARNING: This solution only works if TEXTURE_WRAP_REPEAT is supported,
-    // NPOT textures supported is required and OpenGL ES 2.0 could not support it
-    Rectangle source = { offset.x*texture.width, offset.y*texture.height, tiling.x*texture.width, tiling.y*texture.height };
-    Vector2 origin = { 0.0f, 0.0f };
-
-    DrawTexturePro(texture, source, quad, origin, 0.0f, tint);
-}
-
-// Draw part of a texture (defined by a rectangle) with rotation and scale tiled into dest.
-// NOTE: For tilling a whole texture DrawTextureQuad() is better
-void DrawTextureTiled(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, float scale, Color tint)
-{
-    if ((texture.id <= 0) || (scale <= 0.0f)) return;  // Wanna see a infinite loop?!...just delete this line!
-    if ((source.width == 0) || (source.height == 0)) return;
-
-    int tileWidth = (int)(source.width*scale), tileHeight = (int)(source.height*scale);
-    if ((dest.width < tileWidth) && (dest.height < tileHeight))
-    {
-        // Can fit only one tile
-        DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
-                    (Rectangle){dest.x, dest.y, dest.width, dest.height}, origin, rotation, tint);
-    }
-    else if (dest.width <= tileWidth)
-    {
-        // Tiled vertically (one column)
-        int dy = 0;
-        for (;dy+tileHeight < dest.height; dy += tileHeight)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, source.height}, (Rectangle){dest.x, dest.y + dy, dest.width, (float)tileHeight}, origin, rotation, tint);
-        }
-
-        // Fit last tile
-        if (dy < dest.height)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)dest.width/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                        (Rectangle){dest.x, dest.y + dy, dest.width, dest.height - dy}, origin, rotation, tint);
-        }
-    }
-    else if (dest.height <= tileHeight)
-    {
-        // Tiled horizontally (one row)
-        int dx = 0;
-        for (;dx+tileWidth < dest.width; dx += tileWidth)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)dest.height/tileHeight)*source.height}, (Rectangle){dest.x + dx, dest.y, (float)tileWidth, dest.height}, origin, rotation, tint);
-        }
-
-        // Fit last tile
-        if (dx < dest.width)
-        {
-            DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)dest.height/tileHeight)*source.height},
-                        (Rectangle){dest.x + dx, dest.y, dest.width - dx, dest.height}, origin, rotation, tint);
-        }
-    }
-    else
-    {
-        // Tiled both horizontally and vertically (rows and columns)
-        int dx = 0;
-        for (;dx+tileWidth < dest.width; dx += tileWidth)
-        {
-            int dy = 0;
-            for (;dy+tileHeight < dest.height; dy += tileHeight)
-            {
-                DrawTexturePro(texture, source, (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, (float)tileHeight}, origin, rotation, tint);
-            }
-
-            if (dy < dest.height)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                    (Rectangle){dest.x + dx, dest.y + dy, (float)tileWidth, dest.height - dy}, origin, rotation, tint);
-            }
-        }
-
-        // Fit last column of tiles
-        if (dx < dest.width)
-        {
-            int dy = 0;
-            for (;dy+tileHeight < dest.height; dy += tileHeight)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, source.height},
-                        (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, (float)tileHeight}, origin, rotation, tint);
-            }
-
-            // Draw final tile in the bottom right corner
-            if (dy < dest.height)
-            {
-                DrawTexturePro(texture, (Rectangle){source.x, source.y, ((float)(dest.width - dx)/tileWidth)*source.width, ((float)(dest.height - dy)/tileHeight)*source.height},
-                    (Rectangle){dest.x + dx, dest.y + dy, dest.width - dx, dest.height - dy}, origin, rotation, tint);
-            }
-        }
-    }
-}
-
-// Draws a texture (or part of it) that stretches or shrinks nicely using n-patch info
-void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint)
-{
-    if (texture.id > 0)
-    {
-        float width = (float)texture.width;
-        float height = (float)texture.height;
-
-        float patchWidth = ((int)dest.width <= 0)? 0.0f : dest.width;
-        float patchHeight = ((int)dest.height <= 0)? 0.0f : dest.height;
-
-        if (nPatchInfo.source.width < 0) nPatchInfo.source.x -= nPatchInfo.source.width;
-        if (nPatchInfo.source.height < 0) nPatchInfo.source.y -= nPatchInfo.source.height;
-        if (nPatchInfo.layout == NPATCH_THREE_PATCH_HORIZONTAL) patchHeight = nPatchInfo.source.height;
-        if (nPatchInfo.layout == NPATCH_THREE_PATCH_VERTICAL) patchWidth = nPatchInfo.source.width;
-
-        bool drawCenter = true;
-        bool drawMiddle = true;
-        float leftBorder = (float)nPatchInfo.left;
-        float topBorder = (float)nPatchInfo.top;
-        float rightBorder = (float)nPatchInfo.right;
-        float bottomBorder = (float)nPatchInfo.bottom;
-
-        // Adjust the lateral (left and right) border widths in case patchWidth < texture.width
-        if (patchWidth <= (leftBorder + rightBorder) && nPatchInfo.layout != NPATCH_THREE_PATCH_VERTICAL)
-        {
-            drawCenter = false;
-            leftBorder = (leftBorder/(leftBorder + rightBorder))*patchWidth;
-            rightBorder = patchWidth - leftBorder;
-        }
-
-        // Adjust the lateral (top and bottom) border heights in case patchHeight < texture.height
-        if (patchHeight <= (topBorder + bottomBorder) && nPatchInfo.layout != NPATCH_THREE_PATCH_HORIZONTAL)
-        {
-            drawMiddle = false;
-            topBorder = (topBorder/(topBorder + bottomBorder))*patchHeight;
-            bottomBorder = patchHeight - topBorder;
-        }
-
-        Vector2 vertA, vertB, vertC, vertD;
-        vertA.x = 0.0f;                             // outer left
-        vertA.y = 0.0f;                             // outer top
-        vertB.x = leftBorder;                       // inner left
-        vertB.y = topBorder;                        // inner top
-        vertC.x = patchWidth  - rightBorder;        // inner right
-        vertC.y = patchHeight - bottomBorder;       // inner bottom
-        vertD.x = patchWidth;                       // outer right
-        vertD.y = patchHeight;                      // outer bottom
-
-        Vector2 coordA, coordB, coordC, coordD;
-        coordA.x = nPatchInfo.source.x/width;
-        coordA.y = nPatchInfo.source.y/height;
-        coordB.x = (nPatchInfo.source.x + leftBorder)/width;
-        coordB.y = (nPatchInfo.source.y + topBorder)/height;
-        coordC.x = (nPatchInfo.source.x + nPatchInfo.source.width  - rightBorder)/width;
-        coordC.y = (nPatchInfo.source.y + nPatchInfo.source.height - bottomBorder)/height;
-        coordD.x = (nPatchInfo.source.x + nPatchInfo.source.width)/width;
-        coordD.y = (nPatchInfo.source.y + nPatchInfo.source.height)/height;
-
-        rlSetTexture(texture.id);
-
-        rlPushMatrix();
-            rlTranslatef(dest.x, dest.y, 0.0f);
-            rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-            rlTranslatef(-origin.x, -origin.y, 0.0f);
-
-            rlBegin(RL_QUADS);
-                rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-                rlNormal3f(0.0f, 0.0f, 1.0f);               // Normal vector pointing towards viewer
-
-                if (nPatchInfo.layout == NPATCH_NINE_PATCH)
-                {
-                    // ------------------------------------------------------------
-                    // TOP-LEFT QUAD
-                    rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
-                    if (drawCenter)
-                    {
-                        // TOP-CENTER QUAD
-                        rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-left corner for texture and quad
-                    }
-                    // TOP-RIGHT QUAD
-                    rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-left corner for texture and quad
-                    if (drawMiddle)
-                    {
-                        // ------------------------------------------------------------
-                        // MIDDLE-LEFT QUAD
-                        rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Top-left corner for texture and quad
-                        if (drawCenter)
-                        {
-                            // MIDDLE-CENTER QUAD
-                            rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Bottom-left corner for texture and quad
-                            rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Bottom-right corner for texture and quad
-                            rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Top-right corner for texture and quad
-                            rlTexCoord2f(coordB.x, coordB.y); rlVertex2f(vertB.x, vertB.y);  // Top-left corner for texture and quad
-                        }
-
-                        // MIDDLE-RIGHT QUAD
-                        rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordB.y); rlVertex2f(vertC.x, vertB.y);  // Top-left corner for texture and quad
-                    }
-
-                    // ------------------------------------------------------------
-                    // BOTTOM-LEFT QUAD
-                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Top-left corner for texture and quad
-                    if (drawCenter)
-                    {
-                        // BOTTOM-CENTER QUAD
-                        rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordB.x, coordC.y); rlVertex2f(vertB.x, vertC.y);  // Top-left corner for texture and quad
-                    }
-
-                    // BOTTOM-RIGHT QUAD
-                    rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordC.x, coordC.y); rlVertex2f(vertC.x, vertC.y);  // Top-left corner for texture and quad
-                }
-                else if (nPatchInfo.layout == NPATCH_THREE_PATCH_VERTICAL)
-                {
-                    // TOP QUAD
-                    // -----------------------------------------------------------
-                    // Texture coords                 Vertices
-                    rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
-                    if (drawCenter)
-                    {
-                        // MIDDLE QUAD
-                        // -----------------------------------------------------------
-                        // Texture coords                 Vertices
-                        rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordD.x, coordB.y); rlVertex2f(vertD.x, vertB.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordA.x, coordB.y); rlVertex2f(vertA.x, vertB.y);  // Top-left corner for texture and quad
-                    }
-                    // BOTTOM QUAD
-                    // -----------------------------------------------------------
-                    // Texture coords                 Vertices
-                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordC.y); rlVertex2f(vertD.x, vertC.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordA.x, coordC.y); rlVertex2f(vertA.x, vertC.y);  // Top-left corner for texture and quad
-                }
-                else if (nPatchInfo.layout == NPATCH_THREE_PATCH_HORIZONTAL)
-                {
-                    // LEFT QUAD
-                    // -----------------------------------------------------------
-                    // Texture coords                 Vertices
-                    rlTexCoord2f(coordA.x, coordD.y); rlVertex2f(vertA.x, vertD.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordA.x, coordA.y); rlVertex2f(vertA.x, vertA.y);  // Top-left corner for texture and quad
-                    if (drawCenter)
-                    {
-                        // CENTER QUAD
-                        // -----------------------------------------------------------
-                        // Texture coords                 Vertices
-                        rlTexCoord2f(coordB.x, coordD.y); rlVertex2f(vertB.x, vertD.y);  // Bottom-left corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-right corner for texture and quad
-                        rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-right corner for texture and quad
-                        rlTexCoord2f(coordB.x, coordA.y); rlVertex2f(vertB.x, vertA.y);  // Top-left corner for texture and quad
-                    }
-                    // RIGHT QUAD
-                    // -----------------------------------------------------------
-                    // Texture coords                 Vertices
-                    rlTexCoord2f(coordC.x, coordD.y); rlVertex2f(vertC.x, vertD.y);  // Bottom-left corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordD.y); rlVertex2f(vertD.x, vertD.y);  // Bottom-right corner for texture and quad
-                    rlTexCoord2f(coordD.x, coordA.y); rlVertex2f(vertD.x, vertA.y);  // Top-right corner for texture and quad
-                    rlTexCoord2f(coordC.x, coordA.y); rlVertex2f(vertC.x, vertA.y);  // Top-left corner for texture and quad
-                }
-            rlEnd();
-        rlPopMatrix();
-
-        rlSetTexture(0);
-    }
-}
-
-// Draw textured polygon, defined by vertex and texturecoordinates
-// NOTE: Polygon center must have straight line path to all points
-// without crossing perimeter, points must be in anticlockwise order
-void DrawTexturePoly(Texture2D texture, Vector2 center, Vector2 *points, Vector2 *texcoords, int pointCount, Color tint)
-{
-    rlSetTexture(texture.id);
-
-    // Texturing is only supported on RL_QUADS
-    rlBegin(RL_QUADS);
-
-        rlColor4ub(tint.r, tint.g, tint.b, tint.a);
-
-        for (int i = 0; i < pointCount - 1; i++)
-        {
-            rlTexCoord2f(0.5f, 0.5f);
-            rlVertex2f(center.x, center.y);
-
-            rlTexCoord2f(texcoords[i].x, texcoords[i].y);
-            rlVertex2f(points[i].x + center.x, points[i].y + center.y);
-
-            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
-            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
-
-            rlTexCoord2f(texcoords[i + 1].x, texcoords[i + 1].y);
-            rlVertex2f(points[i + 1].x + center.x, points[i + 1].y + center.y);
-        }
-    rlEnd();
-
-    rlSetTexture(0);
-}
-*/
-
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
 Color Fade(Color color, float alpha)
 {
     if (alpha < 0.0f) alpha = 0.0f;
     else if (alpha > 1.0f) alpha = 1.0f;
 
-    return (Color){color.r, color.g, color.b, (unsigned char)(255.0f*alpha)};
+    return (Color){ color.r, color.g, color.b, (unsigned char)(255.0f*alpha) };
 }
 
 // Get hexadecimal value for a Color
@@ -4301,6 +3660,105 @@ Color ColorFromHSV(float hue, float saturation, float value)
     color.b = (unsigned char)((value - value*saturation*k)*255.0f);
 
     return color;
+}
+
+// Get color multiplied with another color
+Color ColorTint(Color color, Color tint)
+{
+    Color result = color;
+
+    float cR = (float)tint.r/255;
+    float cG = (float)tint.g/255;
+    float cB = (float)tint.b/255;
+    float cA = (float)tint.a/255;
+
+    unsigned char r = (unsigned char)(((float)color.r/255*cR)*255.0f);
+    unsigned char g = (unsigned char)(((float)color.g/255*cG)*255.0f);
+    unsigned char b = (unsigned char)(((float)color.b/255*cB)*255.0f);
+    unsigned char a = (unsigned char)(((float)color.a/255*cA)*255.0f);
+
+    result.r = r;
+    result.g = g;
+    result.b = b;
+    result.a = a;
+
+    return result;
+}
+
+// Get color with brightness correction, brightness factor goes from -1.0f to 1.0f
+Color ColorBrightness(Color color, float factor)
+{
+    Color result = color;
+
+    if (factor > 1.0f) factor = 1.0f;
+    else if (factor < -1.0f) factor = -1.0f;
+
+    float red = (float)color.r;
+    float green = (float)color.g;
+    float blue = (float)color.b;
+
+    if (factor < 0.0f)
+    {
+        factor = 1.0f + factor;
+        red *= factor;
+        green *= factor;
+        blue *= factor;
+    }
+    else
+    {
+        red = (255 - red)*factor + red;
+        green = (255 - green)*factor + green;
+        blue = (255 - blue)*factor + blue;
+    }
+
+    result.r = (unsigned char)red;
+    result.g = (unsigned char)green;
+    result.b = (unsigned char)blue;
+
+    return result;
+}
+
+// Get color with contrast correction
+// NOTE: Contrast values between -1.0f and 1.0f
+Color ColorContrast(Color color, float contrast)
+{
+    Color result = color;
+
+    if (contrast < -1.0f) contrast = -1.0f;
+    else if (contrast > 1.0f) contrast = 1.0f;
+
+    contrast = (1.0f + contrast);
+    contrast *= contrast;
+
+    float pR = (float)color.r/255.0f;
+    pR -= 0.5f;
+    pR *= contrast;
+    pR += 0.5f;
+    pR *= 255;
+    if (pR < 0) pR = 0;
+    else if (pR > 255) pR = 255;
+
+    float pG = (float)color.g/255.0f;
+    pG -= 0.5f;
+    pG *= contrast;
+    pG += 0.5f;
+    pG *= 255;
+    if (pG < 0) pG = 0;
+    else if (pG > 255) pG = 255;
+
+    float pB = (float)color.b/255.0f;
+    pB -= 0.5f;
+    pB *= contrast;
+    pB += 0.5f;
+    pB *= 255;
+    if (pB < 0) pB = 0;
+    else if (pB > 255) pB = 255;
+
+    result.r = (unsigned char)pR;
+    result.g = (unsigned char)pG;
+    result.b = (unsigned char)pB;
+
+    return result;
 }
 
 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
@@ -4695,4 +4153,3 @@ static Vector4 *LoadImageDataNormalized(Image image)
 
 #endif  // RIMAGE_IMPLEMENTATION_ONCE
 #endif  // RIMAGE_IMPLEMENTATION
-
