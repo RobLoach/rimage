@@ -71,8 +71,6 @@
 extern "C" {
 #endif
 
-#include <stdbool.h>
-
 // NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
 // Plain structures in C++ (without constructors) can be initialized with { }
 #if defined(__cplusplus)
@@ -81,91 +79,33 @@ extern "C" {
     #define CLITERAL(type)      (type)
 #endif
 
-typedef enum {
-    LOG_ALL = 0,        // Display all logs
-    LOG_TRACE,          // Trace logging, intended for internal use only
-    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
-    LOG_INFO,           // Info logging, used for program execution info
-    LOG_WARNING,        // Warning logging, used on recoverable failures
-    LOG_ERROR,          // Error logging, used on unrecoverable failures
-    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
-    LOG_NONE            // Disable logging
-} TraceLogLevel;
-
-// Color, 4 components, R8G8B8A8 (32bit)
-typedef struct Color {
-    unsigned char r;        // Color red value
-    unsigned char g;        // Color green value
-    unsigned char b;        // Color blue value
-    unsigned char a;        // Color alpha value
-} Color;
-
-// Rectangle, 4 components
-typedef struct Rectangle {
-    float x;                // Rectangle top-left corner position x
-    float y;                // Rectangle top-left corner position y
-    float width;            // Rectangle width
-    float height;           // Rectangle height
-} Rectangle;
-
-
-// Vector2, 2 components
-typedef struct Vector2 {
-    float x;                // Vector x component
-    float y;                // Vector y component
-} Vector2;
-
-// Vector3, 3 components
-typedef struct Vector3 {
-    float x;                // Vector x component
-    float y;                // Vector y component
-    float z;                // Vector z component
-} Vector3;
-
-// Vector4, 4 components
-typedef struct Vector4 {
-    float x;                // Vector x component
-    float y;                // Vector y component
-    float z;                // Vector z component
-    float w;                // Vector w component
-} Vector4;
-
-typedef struct Image {
-    void *data;             // Image raw data
-    int width;              // Image base width
-    int height;             // Image base height
-    int mipmaps;            // Mipmap levels, 1 by default
-    int format;             // Data format (PixelFormat type)
-} Image;
-
-// Pixel formats
-// NOTE: Support depends on OpenGL version and platform
-typedef enum {
-    PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1, // 8 bit per pixel (no alpha)
-    PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,    // 8*2 bpp (2 channels)
-    PIXELFORMAT_UNCOMPRESSED_R5G6B5,        // 16 bpp
-    PIXELFORMAT_UNCOMPRESSED_R8G8B8,        // 24 bpp
-    PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,      // 16 bpp (1 bit alpha)
-    PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,      // 16 bpp (4 bit alpha)
-    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,      // 32 bpp
-    PIXELFORMAT_UNCOMPRESSED_R32,           // 32 bpp (1 channel - float)
-    PIXELFORMAT_UNCOMPRESSED_R32G32B32,     // 32*3 bpp (3 channels - float)
-    PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,  // 32*4 bpp (4 channels - float)
-    PIXELFORMAT_COMPRESSED_DXT1_RGB,        // 4 bpp (no alpha)
-    PIXELFORMAT_COMPRESSED_DXT1_RGBA,       // 4 bpp (1 bit alpha)
-    PIXELFORMAT_COMPRESSED_DXT3_RGBA,       // 8 bpp
-    PIXELFORMAT_COMPRESSED_DXT5_RGBA,       // 8 bpp
-    PIXELFORMAT_COMPRESSED_ETC1_RGB,        // 4 bpp
-    PIXELFORMAT_COMPRESSED_ETC2_RGB,        // 4 bpp
-    PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,   // 8 bpp
-    PIXELFORMAT_COMPRESSED_PVRT_RGB,        // 4 bpp
-    PIXELFORMAT_COMPRESSED_PVRT_RGBA,       // 4 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
-    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA    // 2 bpp
-} PixelFormat;
+// Function specifiers in case library is build/used as a shared library (Windows)
+// NOTE: Microsoft specifiers to tell compiler that symbols are imported/exported from a .dll
+#if defined(_WIN32)
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #if defined(__TINYC__)
+            #define __declspec(x) __attribute__((x))
+        #endif
+        #define RLAPI __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #elif defined(USE_LIBTYPE_SHARED)
+        #define RLAPI __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
+#endif
 
 #ifndef RLAPI
     #define RLAPI       // Functions defined as 'extern' by default (implicit specifiers)
+#endif
+
+//----------------------------------------------------------------------------------
+// Some basic Defines
+//----------------------------------------------------------------------------------
+
+// NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
+// Plain structures in C++ (without constructors) can be initialized with { }
+#if defined(__cplusplus)
+    #define CLITERAL(type)      type
+#else
+    #define CLITERAL(type)      (type)
 #endif
 
 // Some Basic Colors
@@ -198,15 +138,148 @@ typedef enum {
 #define MAGENTA    CLITERAL(Color){ 255, 0, 255, 255 }     // Magenta
 #define RAYWHITE   CLITERAL(Color){ 245, 245, 245, 255 }   // My own White (raylib logo)
 
+//----------------------------------------------------------------------------------
+// Structures Definition
+//----------------------------------------------------------------------------------
+// Boolean type
+#if (defined(__STDC__) && __STDC_VERSION__ >= 199901L) || (defined(_MSC_VER) && _MSC_VER >= 1800)
+    #include <stdbool.h>
+#elif !defined(__cplusplus) && !defined(bool)
+    typedef enum bool { false = 0, true = !false } bool;
+    #define RL_BOOL_TYPE
+#endif
+
+// Vector2, 2 components
+typedef struct Vector2 {
+    float x;                // Vector x component
+    float y;                // Vector y component
+} Vector2;
+
+// Vector3, 3 components
+typedef struct Vector3 {
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
+} Vector3;
+
+// Vector4, 4 components
+typedef struct Vector4 {
+    float x;                // Vector x component
+    float y;                // Vector y component
+    float z;                // Vector z component
+    float w;                // Vector w component
+} Vector4;
+
+// Color, 4 components, R8G8B8A8 (32bit)
+typedef struct Color {
+    unsigned char r;        // Color red value
+    unsigned char g;        // Color green value
+    unsigned char b;        // Color blue value
+    unsigned char a;        // Color alpha value
+} Color;
+
+// Rectangle, 4 components
+typedef struct Rectangle {
+    float x;                // Rectangle top-left corner position x
+    float y;                // Rectangle top-left corner position y
+    float width;            // Rectangle width
+    float height;           // Rectangle height
+} Rectangle;
+
+// Image, pixel data stored in CPU memory (RAM)
+typedef struct Image {
+    void *data;             // Image raw data
+    int width;              // Image base width
+    int height;             // Image base height
+    int mipmaps;            // Mipmap levels, 1 by default
+    int format;             // Data format (PixelFormat type)
+} Image;
+
+// GlyphInfo, font characters glyphs info
+typedef struct GlyphInfo {
+    int value;              // Character value (Unicode)
+    int offsetX;            // Character offset X when drawing
+    int offsetY;            // Character offset Y when drawing
+    int advanceX;           // Character advance position X
+    Image image;            // Character image data
+} GlyphInfo;
+
+// Font, font texture and GlyphInfo array data
+typedef struct Font {
+    int baseSize;           // Base size (default chars height)
+    int glyphCount;         // Number of glyph characters
+    int glyphPadding;       // Padding around the glyph characters
+    //Texture2D texture;      // Texture atlas containing the glyphs
+    Image texture;          // rimage uses Image instead of Texture2D
+    Rectangle *recs;        // Rectangles in texture for the glyphs
+    GlyphInfo *glyphs;      // Glyphs info data
+} Font;
+
+//----------------------------------------------------------------------------------
+// Enumerators Definition
+//----------------------------------------------------------------------------------
+
+// Trace log level
+// NOTE: Organized by priority level
+typedef enum {
+    LOG_ALL = 0,        // Display all logs
+    LOG_TRACE,          // Trace logging, intended for internal use only
+    LOG_DEBUG,          // Debug logging, used for internal debugging, it should be disabled on release builds
+    LOG_INFO,           // Info logging, used for program execution info
+    LOG_WARNING,        // Warning logging, used on recoverable failures
+    LOG_ERROR,          // Error logging, used on unrecoverable failures
+    LOG_FATAL,          // Fatal logging, used to abort program: exit(EXIT_FAILURE)
+    LOG_NONE            // Disable logging
+} TraceLogLevel;
+
+// Pixel formats
+// NOTE: Support depends on OpenGL version and platform
+typedef enum {
+    PIXELFORMAT_UNCOMPRESSED_GRAYSCALE = 1, // 8 bit per pixel (no alpha)
+    PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA,    // 8*2 bpp (2 channels)
+    PIXELFORMAT_UNCOMPRESSED_R5G6B5,        // 16 bpp
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8,        // 24 bpp
+    PIXELFORMAT_UNCOMPRESSED_R5G5B5A1,      // 16 bpp (1 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R4G4B4A4,      // 16 bpp (4 bit alpha)
+    PIXELFORMAT_UNCOMPRESSED_R8G8B8A8,      // 32 bpp
+    PIXELFORMAT_UNCOMPRESSED_R32,           // 32 bpp (1 channel - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32,     // 32*3 bpp (3 channels - float)
+    PIXELFORMAT_UNCOMPRESSED_R32G32B32A32,  // 32*4 bpp (4 channels - float)
+    PIXELFORMAT_COMPRESSED_DXT1_RGB,        // 4 bpp (no alpha)
+    PIXELFORMAT_COMPRESSED_DXT1_RGBA,       // 4 bpp (1 bit alpha)
+    PIXELFORMAT_COMPRESSED_DXT3_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_DXT5_RGBA,       // 8 bpp
+    PIXELFORMAT_COMPRESSED_ETC1_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_ETC2_EAC_RGBA,   // 8 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGB,        // 4 bpp
+    PIXELFORMAT_COMPRESSED_PVRT_RGBA,       // 4 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_4x4_RGBA,   // 8 bpp
+    PIXELFORMAT_COMPRESSED_ASTC_8x8_RGBA    // 2 bpp
+} PixelFormat;
+
+// Font type, defines generation method
+typedef enum {
+    FONT_DEFAULT = 0,               // Default font generation, anti-aliased
+    FONT_BITMAP,                    // Bitmap font generation, no anti-aliasing
+    FONT_SDF                        // SDF font generation, requires external shader
+} FontType;
+
+//------------------------------------------------------------------------------------
+// Texture Loading and Drawing Functions (Module: textures)
+//------------------------------------------------------------------------------------
+
 // Image loading functions
 // NOTE: This functions do not require GPU access
 RLAPI Image LoadImage(const char *fileName);                                                             // Load image from file into CPU memory (RAM)
 RLAPI Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);       // Load image from RAW file data
 RLAPI Image LoadImageAnim(const char *fileName, int *frames);                                            // Load image sequence from file (frames appended to image.data)
 RLAPI Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize);      // Load image from memory buffer, fileType refers to extension: i.e. '.png'
-RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
+//RLAPI Image LoadImageFromTexture(Texture2D texture);                                                     // Load image from GPU texture data
+//RLAPI Image LoadImageFromScreen(void);                                                                   // Load image from screen buffer and (screenshot)
 RLAPI void UnloadImage(Image image);                                                                     // Unload image from CPU memory (RAM)
 RLAPI bool ExportImage(Image image, const char *fileName);                                               // Export image data to file, returns true on success
+//RLAPI bool ExportImageAsCode(Image image, const char *fileName);                                         // Export image as code file defining an array of bytes, returns true on success
 
 // Image generation functions
 RLAPI Image GenImageColor(int width, int height, Color color);                                           // Generate image: plain color
@@ -223,7 +296,7 @@ RLAPI Image GenImageText(int width, int height, const char *text);              
 RLAPI Image ImageCopy(Image image);                                                                      // Create an image duplicate (useful for transformations)
 RLAPI Image ImageFromImage(Image image, Rectangle rec);                                                  // Create an image from another image piece
 RLAPI Image ImageText(const char *text, int fontSize, Color color);                                      // Create an image from text (default font)
-//RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);         // Create an image from text (custom sprite font)
+RLAPI Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint);         // Create an image from text (custom sprite font)
 RLAPI void ImageFormat(Image *image, int newFormat);                                                     // Convert image data to desired format
 RLAPI void ImageToPOT(Image *image, Color fill);                                                         // Convert image to POT (power-of-two)
 RLAPI void ImageCrop(Image *image, Rectangle crop);                                                      // Crop an image to a defined rectangle
@@ -261,8 +334,8 @@ RLAPI void ImageDrawPixel(Image *dst, int posX, int posY, Color color);         
 RLAPI void ImageDrawPixelV(Image *dst, Vector2 position, Color color);                                   // Draw pixel within an image (Vector version)
 RLAPI void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color); // Draw line within an image
 RLAPI void ImageDrawLineV(Image *dst, Vector2 start, Vector2 end, Color color);                          // Draw line within an image (Vector version)
-RLAPI void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color);               // Draw circle within an image
-RLAPI void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color);                        // Draw circle within an image (Vector version)
+RLAPI void ImageDrawCircle(Image *dst, int centerX, int centerY, int radius, Color color);               // Draw a filled circle within an image
+RLAPI void ImageDrawCircleV(Image *dst, Vector2 center, int radius, Color color);                        // Draw a filled circle within an image (Vector version)
 RLAPI void ImageDrawCircleLines(Image *dst, int centerX, int centerY, int radius, Color color);          // Draw circle outline within an image
 RLAPI void ImageDrawCircleLinesV(Image *dst, Vector2 center, int radius, Color color);                   // Draw circle outline within an image (Vector version)
 RLAPI void ImageDrawRectangle(Image *dst, int posX, int posY, int width, int height, Color color);       // Draw rectangle within an image
@@ -270,8 +343,34 @@ RLAPI void ImageDrawRectangleV(Image *dst, Vector2 position, Vector2 size, Color
 RLAPI void ImageDrawRectangleRec(Image *dst, Rectangle rec, Color color);                                // Draw rectangle within an image
 RLAPI void ImageDrawRectangleLines(Image *dst, Rectangle rec, int thick, Color color);                   // Draw rectangle lines within an image
 RLAPI void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color tint);             // Draw a source image within a destination image (tint applied to source)
-RLAPI void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color);   // Draw text (using default font) within an image (destination)
-//RLAPI void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text (custom sprite font) within an image (destination)
+RLAPI void ImageDrawText(Image *dst, Font font, const char *text, int posX, int posY, int fontSize, Color color);   // Draw text (using default font) within an image (destination)
+RLAPI void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text (custom sprite font) within an image (destination)
+
+/*
+// Texture loading functions
+// NOTE: These functions require GPU access
+RLAPI Texture2D LoadTexture(const char *fileName);                                                       // Load texture from file into GPU memory (VRAM)
+RLAPI Texture2D LoadTextureFromImage(Image image);                                                       // Load texture from image data
+RLAPI TextureCubemap LoadTextureCubemap(Image image, int layout);                                        // Load cubemap from image, multiple image cubemap layouts supported
+RLAPI RenderTexture2D LoadRenderTexture(int width, int height);                                          // Load texture for rendering (framebuffer)
+RLAPI void UnloadTexture(Texture2D texture);                                                             // Unload texture from GPU memory (VRAM)
+RLAPI void UnloadRenderTexture(RenderTexture2D target);                                                  // Unload render texture from GPU memory (VRAM)
+RLAPI void UpdateTexture(Texture2D texture, const void *pixels);                                         // Update GPU texture with new data
+RLAPI void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels);                       // Update GPU texture rectangle with new data
+
+// Texture configuration functions
+RLAPI void GenTextureMipmaps(Texture2D *texture);                                                        // Generate GPU mipmaps for a texture
+RLAPI void SetTextureFilter(Texture2D texture, int filter);                                              // Set texture scaling filter mode
+RLAPI void SetTextureWrap(Texture2D texture, int wrap);                                                  // Set texture wrapping mode
+
+// Texture drawing functions
+RLAPI void DrawTexture(Texture2D texture, int posX, int posY, Color tint);                               // Draw a Texture2D
+RLAPI void DrawTextureV(Texture2D texture, Vector2 position, Color tint);                                // Draw a Texture2D with position defined as Vector2
+RLAPI void DrawTextureEx(Texture2D texture, Vector2 position, float rotation, float scale, Color tint);  // Draw a Texture2D with extended parameters
+RLAPI void DrawTextureRec(Texture2D texture, Rectangle source, Vector2 position, Color tint);            // Draw a part of a texture defined by a rectangle
+RLAPI void DrawTexturePro(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+RLAPI void DrawTextureNPatch(Texture2D texture, NPatchInfo nPatchInfo, Rectangle dest, Vector2 origin, float rotation, Color tint); // Draws a texture (or part of it) that stretches or shrinks nicely
+*/
 
 // Color/pixel related functions
 RLAPI Color Fade(Color color, float alpha);                                 // Get color with alpha applied, alpha goes from 0.0f to 1.0f
@@ -290,6 +389,68 @@ RLAPI Color GetPixelColor(void *srcPtr, int format);                        // G
 RLAPI void SetPixelColor(void *dstPtr, Color color, int format);            // Set color formatted into destination pixel pointer
 RLAPI int GetPixelDataSize(int width, int height, int format);              // Get pixel data size in bytes for certain format
 
+//------------------------------------------------------------------------------------
+// Font Loading and Text Drawing Functions (Module: text)
+//------------------------------------------------------------------------------------
+
+// Font loading/unloading functions
+RLAPI Font GetFontDefault(void);                                                            // Get the default Font
+RLAPI Font LoadFont(const char *fileName);                                                  // Load font from file into GPU memory (VRAM)
+RLAPI Font LoadFontEx(const char *fileName, int fontSize, int *fontChars, int glyphCount);  // Load font from file with extended parameters, use NULL for fontChars and 0 for glyphCount to load the default character set
+RLAPI Font LoadFontFromImage(Image image, Color key, int firstChar);                        // Load font from Image (XNA style)
+RLAPI Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
+RLAPI GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *fontChars, int glyphCount, int type); // Load font data for further use
+RLAPI Image GenImageFontAtlas(const GlyphInfo *chars, Rectangle **recs, int glyphCount, int fontSize, int padding, int packMethod); // Generate image font atlas using chars info
+RLAPI void UnloadFontData(GlyphInfo *chars, int glyphCount);                                // Unload font chars info data (RAM)
+RLAPI void UnloadFont(Font font);                                                           // Unload font from GPU memory (VRAM)
+//RLAPI bool ExportFontAsCode(Font font, const char *fileName);                               // Export font as code file, returns true on success
+
+/*
+// Text drawing functions
+RLAPI void DrawFPS(int posX, int posY);                                                     // Draw current FPS
+RLAPI void DrawText(const char *text, int posX, int posY, int fontSize, Color color);       // Draw text (using default font)
+RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
+RLAPI void DrawTextPro(Font font, const char *text, Vector2 position, Vector2 origin, float rotation, float fontSize, float spacing, Color tint); // Draw text using Font and pro parameters (rotation)
+RLAPI void DrawTextCodepoint(Font font, int codepoint, Vector2 position, float fontSize, Color tint); // Draw one character (codepoint)
+RLAPI void DrawTextCodepoints(Font font, const int *codepoints, int count, Vector2 position, float fontSize, float spacing, Color tint); // Draw multiple character (codepoint)
+*/
+
+// Text font info functions
+//RLAPI int MeasureText(const char *text, int fontSize);                                      // Measure string width for default font
+RLAPI Vector2 MeasureTextEx(Font font, const char *text, float fontSize, float spacing);    // Measure string size for Font
+RLAPI int GetGlyphIndex(Font font, int codepoint);                                          // Get glyph index position in font for a codepoint (unicode character), fallback to '?' if not found
+RLAPI GlyphInfo GetGlyphInfo(Font font, int codepoint);                                     // Get glyph font info data for a codepoint (unicode character), fallback to '?' if not found
+RLAPI Rectangle GetGlyphAtlasRec(Font font, int codepoint);                                 // Get glyph rectangle in font atlas for a codepoint (unicode character), fallback to '?' if not found
+
+// Text codepoints management functions (unicode characters)
+RLAPI char *LoadUTF8(const int *codepoints, int length);                // Load UTF-8 text encoded from codepoints array
+RLAPI void UnloadUTF8(char *text);                                      // Unload UTF-8 text encoded from codepoints array
+RLAPI int *LoadCodepoints(const char *text, int *count);                // Load all codepoints from a UTF-8 text string, codepoints count returned by parameter
+RLAPI void UnloadCodepoints(int *codepoints);                           // Unload codepoints data from memory
+RLAPI int GetCodepointCount(const char *text);                          // Get total number of codepoints in a UTF-8 encoded string
+RLAPI int GetCodepoint(const char *text, int *codepointSize);           // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
+RLAPI int GetCodepointNext(const char *text, int *codepointSize);       // Get next codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
+RLAPI int GetCodepointPrevious(const char *text, int *codepointSize);   // Get previous codepoint in a UTF-8 encoded string, 0x3f('?') is returned on failure
+RLAPI const char *CodepointToUTF8(int codepoint, int *utf8Size);        // Encode one codepoint into UTF-8 byte array (array length returned as parameter)
+
+// Text strings management functions (no UTF-8 strings, only byte chars)
+// NOTE: Some strings allocate memory internally for returned strings, just be careful!
+RLAPI int TextCopy(char *dst, const char *src);                                             // Copy one string to another, returns bytes copied
+RLAPI bool TextIsEqual(const char *text1, const char *text2);                               // Check if two text string are equal
+RLAPI unsigned int TextLength(const char *text);                                            // Get text length, checks for '\0' ending
+RLAPI const char *TextFormat(const char *text, ...);                                        // Text formatting with variables (sprintf() style)
+RLAPI const char *TextSubtext(const char *text, int position, int length);                  // Get a piece of a text string
+RLAPI char *TextReplace(char *text, const char *replace, const char *by);                   // Replace text string (WARNING: memory must be freed!)
+RLAPI char *TextInsert(const char *text, const char *insert, int position);                 // Insert text in a position (WARNING: memory must be freed!)
+RLAPI const char *TextJoin(const char **textList, int count, const char *delimiter);        // Join text strings with delimiter
+RLAPI const char **TextSplit(const char *text, char delimiter, int *count);                 // Split text into multiple strings
+RLAPI void TextAppend(char *text, const char *append, int *position);                       // Append text at specific position and move cursor!
+RLAPI int TextFindIndex(const char *text, const char *find);                                // Find first text occurrence within a string
+RLAPI const char *TextToUpper(const char *text);                      // Get upper case version of provided string
+RLAPI const char *TextToLower(const char *text);                      // Get lower case version of provided string
+RLAPI const char *TextToPascal(const char *text);                     // Get Pascal case notation version of provided string
+RLAPI int TextToInteger(const char *text);                            // Get integer value from text (negative values not supported)
+
 #ifdef __cplusplus
 }
 #endif
@@ -301,6 +462,7 @@ RLAPI int GetPixelDataSize(int width, int height, int format);              // G
 #define RIMAGE_IMPLEMENTATION_ONCE
 
 #define SUPPORT_MODULE_RTEXTURES
+#define SUPPORT_MODULE_RTEXT
 #define SUPPORT_IMAGE_MANIPULATION
 //#define SUPPORT_IMAGE_GENERATION
 #define SUPPORT_IMAGE_EXPORT
@@ -377,6 +539,18 @@ extern "C" {
 #ifndef RIMAGE_MEMCPY
 #include <string.h>
 #define RIMAGE_MEMCPY(dest, src, n) memcpy(dest, src, n)
+#endif
+
+// Text
+//#define SUPPORT_DEFAULT_FONT 1
+//#define SUPPORT_FILEFORMAT_FNT      1
+#define SUPPORT_FILEFORMAT_TTF      1
+#define SUPPORT_TEXT_MANIPULATION   1
+#ifndef MAX_TEXT_BUFFER_LENGTH
+#define MAX_TEXT_BUFFER_LENGTH      1024
+#endif
+#ifndef MAX_TEXTSPLIT_COUNT
+#define MAX_TEXTSPLIT_COUNT          128
 #endif
 
 #ifndef RIMAGE_GETFILEEXTENSION
@@ -512,8 +686,9 @@ bool rimage_savefiledata(const char *fileName, void *data, unsigned int bytesToW
 }
 #endif
 
-// Include raylib's modified rtextures module.
+// Include the modified raylib code.
 #include "src/rtextures.c"
+#include "src/rtext.c"
 
 #ifdef __cplusplus
 }

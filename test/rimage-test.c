@@ -19,6 +19,14 @@ int main() {
         assert(image.height == 600);
     }
 
+    // Font
+    {
+        Font font = LoadFont("resources/font.ttf");
+        Vector2 position = {10, 10};
+        ImageDrawTextEx(&image, font, "Hello World", position, 10.0f, 0.0f, RED);
+        UnloadFont(font);
+    }
+
     // Unload
     UnloadImage(image);
 

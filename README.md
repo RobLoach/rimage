@@ -12,9 +12,10 @@
 int main() {
     Image image = LoadImage("cat.png");
 
-    ImageDrawCircle(&image, 20, 20, 10, RED);
-    ImageDrawLine(&image, 200, 10, 80, 300, BLUE);
-    ImageDrawRectangle(&image, 10, 150, 50, 40, GREEN);
+    ImageDrawCircle(&image, 30, 10, 30, SKYBLUE);
+    ImageDrawRectangle(&image, 100, 100, 100, 140, GREEN);
+    ImageDrawLine(&image, 50, 50, 200, 80, ORANGE);
+    ImageDrawRectangle(&image, 20, 150, 50, 80, RED);
 
     ExportImage(image, "out.png");
 

@@ -1264,7 +1264,6 @@ Image ImageText(const char *text, int fontSize, Color color)
     return imText;
 }
 
-/*
 // Create an image from text (custom sprite font)
 Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Color tint)
 {
@@ -1324,7 +1323,7 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
         // Using nearest-neighbor scaling algorithm for default font
         // TODO: Allow defining the preferred scaling mechanism externally
         // WARNING: Module required: rtext
-        if (font.texture.id == GetFontDefault().texture.id) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
+        if (font.texture.data == GetFontDefault().texture.data) ImageResizeNN(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
         else ImageResize(&imText, (int)(imSize.x*scaleFactor), (int)(imSize.y*scaleFactor));
     }
 #else
@@ -1333,7 +1332,6 @@ Image ImageTextEx(Font font, const char *text, float fontSize, float spacing, Co
 #endif
     return imText;
 }
-*/
 
 // Crop image depending on alpha value
 // NOTE: Threshold is defined as a percentatge: 0.0f -> 1.0f
@@ -3151,19 +3149,17 @@ void ImageDraw(Image *dst, Image src, Rectangle srcRec, Rectangle dstRec, Color 
 }
 
 // Draw text (default font) within an image (destination)
-void ImageDrawText(Image *dst, const char *text, int posX, int posY, int fontSize, Color color)
+void ImageDrawText(Image *dst, Font font, const char *text, int posX, int posY, int fontSize, Color color)
 {
 #if defined(SUPPORT_MODULE_RTEXT)
     Vector2 position = { (float)posX, (float)posY };
     // NOTE: For default font, spacing is set to desired font size / default font size (10)
-    ImageDrawTextEx(dst, GetFontDefault(), text, position, (float)fontSize, (float)fontSize/10, color);   // WARNING: Module required: rtext
+    ImageDrawTextEx(dst, font, text, position, (float)fontSize, (float)fontSize/10, color);   // WARNING: Module required: rtext
 #else
     TRACELOG(LOG_WARNING, "IMAGE: ImageDrawText() requires module: rtext");
 #endif
 }
 
-/*
-TODO: Add Text support
 // Draw text (custom sprite font) within an image (destination)
 void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint)
 {
@@ -3176,7 +3172,6 @@ void ImageDrawTextEx(Image *dst, Font font, const char *text, Vector2 position, 
 
     UnloadImage(imText);
 }
-*/
 
 /*
 ================================================
