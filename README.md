@@ -1,3 +1,5 @@
+# Use [pntr](https://github.com/robloach/pntr) instead
+
 # rimage
 
 *rimage* provides basic image functions for loading and manipulating basic 2D bitmap data, forked from [raylib](https://github.com/raysan5/raylib)'s [textures](https://github.com/raysan5/raylib/blob/master/src/rtextures.c) module.
